@@ -11,14 +11,14 @@ Built with Next.js 16, AI SDK v6, and the Jira Cloud REST API. Portfolio project
 3. Edit any field in the card
 4. Click **Create in Jira** to create a real issue in your Jira project
 
-The model never creates a Jira ticket directly — it only structures the data. Creation always requires an explicit user action.
+The model never creates a Jira ticket directly - it only structures the data. Creation always requires an explicit user action.
 
 ## Stack
 
-- [Next.js 16](https://nextjs.org) — App Router, streaming API routes
-- [AI SDK v6](https://sdk.vercel.ai) — `streamText`, `useChat`, tool calling
-- [Anthropic](https://anthropic.com) — claude-haiku-4-5 by default (configurable)
-- [Jira Cloud REST API v3](https://developer.atlassian.com/cloud/jira/platform/rest/v3/) — issue creation
+- [Next.js 16](https://nextjs.org) - App Router, streaming API routes
+- [AI SDK v6](https://sdk.vercel.ai) - `streamText`, `useChat`, tool calling
+- [Anthropic](https://anthropic.com) - claude-haiku-4-5 by default (configurable)
+- [Jira Cloud REST API v3](https://developer.atlassian.com/cloud/jira/platform/rest/v3/) - issue creation
 - [Tailwind CSS v4](https://tailwindcss.com)
 
 ## Getting started
@@ -42,13 +42,13 @@ Fill in `.env.local`:
 | Variable | Where to get it |
 |---|---|
 | `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com) |
-| `ANTHROPIC_MODEL` | optional — defaults to `claude-haiku-4-5` |
+| `ANTHROPIC_MODEL` | optional - defaults to `claude-haiku-4-5` |
 | `JIRA_BASE_URL` | your Atlassian site URL, e.g. `https://yoursite.atlassian.net` |
 | `JIRA_EMAIL` | the email on your Atlassian account |
 | `JIRA_API_TOKEN` | [id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens) |
 | `JIRA_PROJECT_KEY` | the key of your Jira project (e.g. `DEMO`) |
 
-> **Note:** Point `JIRA_BASE_URL` at a personal sandbox only — never a work Jira instance.
+> **Note:** Point `JIRA_BASE_URL` at a personal sandbox only - never a work Jira instance.
 
 ### 3. Run
 
@@ -73,8 +73,8 @@ No code change needed. Omit the variable to use the default (`claude-haiku-4-5`)
 ```
 app/
   api/
-    chat/route.ts          # streaming POST — runs streamText with draftTicket tool
-    create-ticket/route.ts # plain POST — calls Jira REST API
+    chat/route.ts          # streaming POST - runs streamText with draftTicket tool
+    create-ticket/route.ts # plain POST - calls Jira REST API
   page.tsx                 # chat UI with editable draft card
 lib/
   tools/
@@ -88,4 +88,4 @@ lib/
 3. Add all env vars from `.env.example` in the Vercel project settings
 4. Deploy
 
-The most common reason a working-locally build breaks in production is missing env vars in Vercel — double-check all six are set.
+The most common reason a working-locally build breaks in production is missing env vars in Vercel - double-check all six are set.
