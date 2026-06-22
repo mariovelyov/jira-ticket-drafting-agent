@@ -2,63 +2,47 @@
 
 import { useChat } from '@ai-sdk/react';
 import { useRef, useState } from 'react';
+import StoryCard, { type StoryFields } from './components/StoryCard';
+import BugCard, { type BugFields } from './components/BugCard';
+import type { CreateStatus } from './components/StoryCard';
 
-type DraftFields = {
-  summary: string;
-  issueType: 'Bug' | 'Story';
-  description: string;
-  acceptanceCriteria: string[];
-};
-
-type CreateStatus =
-  | { type: 'idle' }
-  | { type: 'loading' }
-  | { type: 'success'; key: string; url: string }
-  | { type: 'error'; message: string };
+type DraftState =
+  | { kind: 'story'; fields: StoryFields }
+  | { kind: 'bug'; fields: BugFields };
 
 export default function Home() {
   const { messages, sendMessage, status } = useChat();
   const [input, setInput] = useState('');
-  const [drafts, setDrafts] = useState<Record<string, DraftFields>>({});
+  const [drafts, setDrafts] = useState<Record<string, DraftState>>({});
   const [createStatuses, setCreateStatuses] = useState<Record<string, CreateStatus>>({});
   const initializedRef = useRef<Set<string>>(new Set());
 
-  function updateDraft(toolCallId: string, patch: Partial<DraftFields>) {
-    setDrafts((prev) => ({
-      ...prev,
-      [toolCallId]: { ...prev[toolCallId], ...patch },
-    }));
-  }
-
-  function addCriteria(toolCallId: string) {
-    setDrafts((prev) => ({
-      ...prev,
-      [toolCallId]: {
-        ...prev[toolCallId],
-        acceptanceCriteria: [...prev[toolCallId].acceptanceCriteria, ''],
-      },
-    }));
-  }
-
-  function removeCriteria(toolCallId: string, index: number) {
-    setDrafts((prev) => ({
-      ...prev,
-      [toolCallId]: {
-        ...prev[toolCallId],
-        acceptanceCriteria: prev[toolCallId].acceptanceCriteria.filter((_, i) => i !== index),
-      },
-    }));
+  function updateDraft(toolCallId: string, patch: Partial<StoryFields> | Partial<BugFields>) {
+    setDrafts((prev) => {
+      const current = prev[toolCallId];
+      if (!current) return prev;
+      return {
+        ...prev,
+        [toolCallId]: { ...current, fields: { ...current.fields, ...patch } } as DraftState,
+      };
+    });
   }
 
   async function handleCreate(toolCallId: string) {
-    const fields = drafts[toolCallId];
-    if (!fields) return;
+    const draft = drafts[toolCallId];
+    if (!draft) return;
+
+    const payload =
+      draft.kind === 'story'
+        ? { issueType: 'Story', ...draft.fields }
+        : { issueType: 'Bug', ...draft.fields };
+
     setCreateStatuses((prev) => ({ ...prev, [toolCallId]: { type: 'loading' } }));
     try {
       const res = await fetch('/api/create-ticket', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(fields),
+        body: JSON.stringify(payload),
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? 'Unknown error');
@@ -72,6 +56,54 @@ export default function Home() {
         [toolCallId]: {
           type: 'error',
           message: err instanceof Error ? err.message : 'Request failed',
+        },
+      }));
+    }
+  }
+
+  function initDraft(toolCallId: string, kind: 'story' | 'bug', output: Record<string, unknown>) {
+    if (initializedRef.current.has(toolCallId)) return;
+    initializedRef.current.add(toolCallId);
+
+    if (kind === 'story') {
+      setDrafts((prev) => ({
+        ...prev,
+        [toolCallId]: {
+          kind: 'story',
+          fields: {
+            summary: '',
+            problemDescription: '',
+            who: '',
+            what: '',
+            why: '',
+            acceptanceCriteria: [],
+            dependencies: [],
+            risks: [],
+            ux: '',
+            analytics: '',
+            releaseNotes: '',
+            qa: '',
+            ...output,
+          } as StoryFields,
+        },
+      }));
+    } else {
+      setDrafts((prev) => ({
+        ...prev,
+        [toolCallId]: {
+          kind: 'bug',
+          fields: {
+            summary: '',
+            zendeskUrl: '',
+            preconditions: [],
+            stepsToReproduce: [],
+            expectedOutcome: '',
+            actualOutcome: '',
+            additionalNotes: '',
+            releaseNotes: '',
+            qa: '',
+            ...output,
+          } as BugFields,
         },
       }));
     }
@@ -110,15 +142,17 @@ export default function Home() {
                 );
               }
 
-              if (part.type === 'tool-draftTicket') {
-                // eslint-disable-next-line @typescript-eslint/no-explicit-any
-                const toolPart = part as any;
-                const toolCallId: string = toolPart.toolCallId;
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+              const toolPart = part as any;
+              const toolCallId: string = toolPart.toolCallId;
+
+              if (part.type === 'tool-draftStory' || part.type === 'tool-draftBug') {
+                const kind = part.type === 'tool-draftStory' ? 'story' : 'bug';
 
                 if (toolPart.state === 'input-streaming' || toolPart.state === 'input-available') {
                   return (
                     <div key={partIndex} className="text-gray-400 text-sm italic">
-                      Drafting ticket…
+                      Drafting ticket...
                     </div>
                   );
                 }
@@ -132,122 +166,31 @@ export default function Home() {
                 }
 
                 if (toolPart.state === 'output-available') {
-                  // Initialize draft state from model output once, without fighting user edits
-                  if (!initializedRef.current.has(toolCallId)) {
-                    initializedRef.current.add(toolCallId);
-                    setDrafts((prev) => ({
-                      ...prev,
-                      [toolCallId]: { ...toolPart.output },
-                    }));
-                  }
-
+                  initDraft(toolCallId, kind, toolPart.output);
                   const draft = drafts[toolCallId];
                   const createStatus = createStatuses[toolCallId] ?? { type: 'idle' };
-
                   if (!draft) return null;
 
+                  if (draft.kind === 'story') {
+                    return (
+                      <StoryCard
+                        key={partIndex}
+                        fields={draft.fields}
+                        createStatus={createStatus}
+                        onUpdate={(patch) => updateDraft(toolCallId, patch)}
+                        onCreate={() => handleCreate(toolCallId)}
+                      />
+                    );
+                  }
+
                   return (
-                    <div
+                    <BugCard
                       key={partIndex}
-                      className="border border-gray-200 rounded-xl p-4 bg-white shadow-sm space-y-3"
-                    >
-                      <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">
-                        Draft Ticket
-                      </p>
-
-                      <div className="space-y-1">
-                        <label className="text-xs text-gray-500">Summary</label>
-                        <input
-                          className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                          value={draft.summary}
-                          onChange={(e) => updateDraft(toolCallId, { summary: e.target.value })}
-                        />
-                      </div>
-
-                      <div className="space-y-1">
-                        <label className="text-xs text-gray-500">Issue Type</label>
-                        <select
-                          className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                          value={draft.issueType}
-                          onChange={(e) =>
-                            updateDraft(toolCallId, {
-                              issueType: e.target.value as 'Bug' | 'Story',
-                            })
-                          }
-                        >
-                          <option value="Bug">Bug</option>
-                          <option value="Story">Story</option>
-                        </select>
-                      </div>
-
-                      <div className="space-y-1">
-                        <label className="text-xs text-gray-500">Description</label>
-                        <textarea
-                          className="w-full border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 resize-none"
-                          rows={3}
-                          value={draft.description}
-                          onChange={(e) =>
-                            updateDraft(toolCallId, { description: e.target.value })
-                          }
-                        />
-                      </div>
-
-                      <div className="space-y-2">
-                        <label className="text-xs text-gray-500">Acceptance Criteria</label>
-                        {draft.acceptanceCriteria.map((criterion, i) => (
-                          <div key={i} className="flex gap-2">
-                            <input
-                              className="flex-1 border border-gray-300 rounded px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-                              value={criterion}
-                              onChange={(e) => {
-                                const updated = [...draft.acceptanceCriteria];
-                                updated[i] = e.target.value;
-                                updateDraft(toolCallId, { acceptanceCriteria: updated });
-                              }}
-                            />
-                            <button
-                              onClick={() => removeCriteria(toolCallId, i)}
-                              className="text-gray-400 hover:text-red-500 text-sm px-2"
-                              aria-label="Remove criterion"
-                            >
-                              ✕
-                            </button>
-                          </div>
-                        ))}
-                        <button
-                          onClick={() => addCriteria(toolCallId)}
-                          className="text-blue-500 hover:text-blue-700 text-xs"
-                        >
-                          + Add criterion
-                        </button>
-                      </div>
-
-                      <div className="pt-1 flex items-center gap-3">
-                        {createStatus.type === 'success' ? (
-                          <a
-                            href={createStatus.url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="text-green-700 font-medium text-sm"
-                          >
-                            Created: {createStatus.key} ↗
-                          </a>
-                        ) : (
-                          <>
-                            <button
-                              onClick={() => handleCreate(toolCallId)}
-                              disabled={createStatus.type === 'loading'}
-                              className="bg-blue-600 text-white rounded px-4 py-2 text-sm hover:bg-blue-700 disabled:opacity-50"
-                            >
-                              {createStatus.type === 'loading' ? 'Creating…' : 'Create in Jira'}
-                            </button>
-                            {createStatus.type === 'error' && (
-                              <p className="text-red-600 text-xs">{createStatus.message}</p>
-                            )}
-                          </>
-                        )}
-                      </div>
-                    </div>
+                      fields={draft.fields}
+                      createStatus={createStatus}
+                      onUpdate={(patch) => updateDraft(toolCallId, patch)}
+                      onCreate={() => handleCreate(toolCallId)}
+                    />
                   );
                 }
               }
@@ -270,7 +213,7 @@ export default function Home() {
         >
           <input
             className="flex-1 border border-gray-300 rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-            placeholder="Describe a bug or feature request…"
+            placeholder="Describe a bug or feature request..."
             value={input}
             onChange={(e) => setInput(e.target.value)}
           />

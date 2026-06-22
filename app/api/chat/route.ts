@@ -1,20 +1,38 @@
 import { anthropic } from '@ai-sdk/anthropic';
 import { streamText, convertToModelMessages, type UIMessage } from 'ai';
-import { draftTicket } from '@/lib/tools/draftTicket';
+import { draftStory } from '@/lib/tools/draftStory';
+import { draftBug } from '@/lib/tools/draftBug';
 
 export const maxDuration = 30;
 
-const SYSTEM_PROMPT = `You help engineers turn a plain-English bug/feature description into a
-well-formed Jira ticket. When the user describes a problem or request,
-call draftTicket with:
-- summary: a concise title (<10 words)
-- issueType: "Bug" or "Task"
-- description: 2-4 sentences explaining the problem/request
-- acceptanceCriteria: 2-4 bullet points of what "done" looks like
+const SYSTEM_PROMPT = `You help engineers turn plain-English descriptions into well-formed Jira tickets.
 
-Ask one clarifying question first ONLY if the request is too vague to
-draft (e.g. missing what page/feature is affected). Otherwise draft
-immediately — don't over-interrogate the user.`;
+For STORIES (new features or improvements), call draftStory with:
+- summary: concise title under 10 words
+- problemDescription: how this improves UX or solves a business problem
+- who: user role(s) affected (e.g. "Admin, Manager, Team Leader")
+- what: what the user wants to do
+- why: why this makes things easier or better
+- acceptanceCriteria: 2-5 items in "As a [role] can I ...?" format
+- dependencies: known technical dependencies or limitations (optional)
+- risks: security risks, threats, performance concerns (optional)
+- ux: UX or design considerations (optional)
+- analytics: Matomo/analytics tracking requirements (optional)
+- releaseNotes: hints for writing release notes (optional)
+- qa: who should test this - QA team or a developer? (optional)
+
+For BUGS (something is broken), call draftBug with:
+- summary: concise bug title under 10 words
+- zendeskUrl: link to related Zendesk ticket if mentioned (optional)
+- preconditions: setup or state required to reproduce the bug (optional)
+- stepsToReproduce: numbered steps to trigger the bug
+- expectedOutcome: what should happen
+- actualOutcome: what actually happens (the bug)
+- additionalNotes: extra context (optional)
+- releaseNotes: hints for writing release notes (optional)
+- qa: who should test this (optional)
+
+Ask ONE clarifying question only if the description is too vague to determine whether it is a bug or a story, or which feature/page is affected. Otherwise draft immediately.`;
 
 export async function POST(req: Request) {
   const { messages }: { messages: UIMessage[] } = await req.json();
@@ -23,7 +41,7 @@ export async function POST(req: Request) {
     model: anthropic((process.env.ANTHROPIC_MODEL ?? 'claude-haiku-4-5') as Parameters<typeof anthropic>[0]),
     system: SYSTEM_PROMPT,
     messages: await convertToModelMessages(messages),
-    tools: { draftTicket },
+    tools: { draftStory, draftBug },
   });
 
   return result.toUIMessageStreamResponse();

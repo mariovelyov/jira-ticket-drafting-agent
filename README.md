@@ -7,18 +7,24 @@ Built with Next.js 16, AI SDK v6, and the Jira Cloud REST API. Portfolio project
 ## How it works
 
 1. Type a bug or feature description in the chat
-2. The model drafts a structured ticket (summary, issue type, description, acceptance criteria)
-3. Edit any field in the card
-4. Click **Create in Jira** to create a real issue in your Jira project
+2. The model calls `draftStory` or `draftBug` depending on what you described
+3. An editable card appears with all structured fields pre-filled
+4. Edit any field, then click **Create in Jira** to create a real issue
 
 The model never creates a Jira ticket directly - it only structures the data. Creation always requires an explicit user action.
+
+## Ticket formats
+
+**Stories** follow the 3W format: Problem this solves, Who/What/Why, Acceptance Criteria ("As a [role] can I ...?"), Dependencies, Risks, UX, Analytics, Release notes, QA.
+
+**Bugs** follow: Zendesk link, Preconditions, Steps to reproduce, Expected outcome, Actual outcome, Additional notes, Release notes, QA.
 
 ## Stack
 
 - [Next.js 16](https://nextjs.org) - App Router, streaming API routes
 - [AI SDK v6](https://sdk.vercel.ai) - `streamText`, `useChat`, tool calling
 - [Anthropic](https://anthropic.com) - claude-haiku-4-5 by default (configurable)
-- [Jira Cloud REST API v3](https://developer.atlassian.com/cloud/jira/platform/rest/v3/) - issue creation
+- [Jira Cloud REST API v3](https://developer.atlassian.com/cloud/jira/platform/rest/v3/) - issue creation with ADF formatting
 - [Tailwind CSS v4](https://tailwindcss.com)
 
 ## Getting started
@@ -73,12 +79,16 @@ No code change needed. Omit the variable to use the default (`claude-haiku-4-5`)
 ```
 app/
   api/
-    chat/route.ts          # streaming POST - runs streamText with draftTicket tool
-    create-ticket/route.ts # plain POST - calls Jira REST API
-  page.tsx                 # chat UI with editable draft card
+    chat/route.ts          # streaming POST - runs streamText with draftStory and draftBug tools
+    create-ticket/route.ts # plain POST - builds ADF and calls Jira REST API
+  components/
+    StoryCard.tsx          # editable card for story tickets
+    BugCard.tsx            # editable card for bug tickets
+  page.tsx                 # chat UI
 lib/
   tools/
-    draftTicket.ts         # tool definition (pure passthrough, no side effects)
+    draftStory.ts          # story tool (pure passthrough, no side effects)
+    draftBug.ts            # bug tool (pure passthrough, no side effects)
 ```
 
 ## Deploy to Vercel
