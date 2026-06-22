@@ -1,36 +1,91 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Jira Ticket Drafting Agent
 
-## Getting Started
+A streaming chat app that turns plain-English bug/feature descriptions into structured Jira tickets. Describe a problem, review and edit the AI-drafted fields, then create a real Jira issue with one click.
 
-First, run the development server:
+Built with Next.js 16, AI SDK v6, and the Jira Cloud REST API. Portfolio project demonstrating a human-in-the-loop AI architecture.
+
+## How it works
+
+1. Type a bug or feature description in the chat
+2. The model drafts a structured ticket (summary, issue type, description, acceptance criteria)
+3. Edit any field in the card
+4. Click **Create in Jira** to create a real issue in your Jira project
+
+The model never creates a Jira ticket directly — it only structures the data. Creation always requires an explicit user action.
+
+## Stack
+
+- [Next.js 16](https://nextjs.org) — App Router, streaming API routes
+- [AI SDK v6](https://sdk.vercel.ai) — `streamText`, `useChat`, tool calling
+- [Anthropic](https://anthropic.com) — claude-haiku-4-5 by default (configurable)
+- [Jira Cloud REST API v3](https://developer.atlassian.com/cloud/jira/platform/rest/v3/) — issue creation
+- [Tailwind CSS v4](https://tailwindcss.com)
+
+## Getting started
+
+### 1. Clone and install
+
+```bash
+git clone https://github.com/mariovelyov/jira-ticket-drafting-agent
+cd jira-ticket-drafting-agent
+npm install
+```
+
+### 2. Set up environment variables
+
+```bash
+cp .env.example .env.local
+```
+
+Fill in `.env.local`:
+
+| Variable | Where to get it |
+|---|---|
+| `ANTHROPIC_API_KEY` | [console.anthropic.com](https://console.anthropic.com) |
+| `ANTHROPIC_MODEL` | optional — defaults to `claude-haiku-4-5` |
+| `JIRA_BASE_URL` | your Atlassian site URL, e.g. `https://yoursite.atlassian.net` |
+| `JIRA_EMAIL` | the email on your Atlassian account |
+| `JIRA_API_TOKEN` | [id.atlassian.com/manage-profile/security/api-tokens](https://id.atlassian.com/manage-profile/security/api-tokens) |
+| `JIRA_PROJECT_KEY` | the key of your Jira project (e.g. `DEMO`) |
+
+> **Note:** Point `JIRA_BASE_URL` at a personal sandbox only — never a work Jira instance.
+
+### 3. Run
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000).
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Switching models
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Set `ANTHROPIC_MODEL` in `.env.local` to any Anthropic model ID:
 
-## Learn More
+```
+ANTHROPIC_MODEL=claude-sonnet-4-6
+```
 
-To learn more about Next.js, take a look at the following resources:
+No code change needed. Omit the variable to use the default (`claude-haiku-4-5`).
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Project structure
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+app/
+  api/
+    chat/route.ts          # streaming POST — runs streamText with draftTicket tool
+    create-ticket/route.ts # plain POST — calls Jira REST API
+  page.tsx                 # chat UI with editable draft card
+lib/
+  tools/
+    draftTicket.ts         # tool definition (pure passthrough, no side effects)
+```
 
-## Deploy on Vercel
+## Deploy to Vercel
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+1. Push to GitHub
+2. Import the repo at [vercel.com/new](https://vercel.com/new)
+3. Add all env vars from `.env.example` in the Vercel project settings
+4. Deploy
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+The most common reason a working-locally build breaks in production is missing env vars in Vercel — double-check all six are set.
