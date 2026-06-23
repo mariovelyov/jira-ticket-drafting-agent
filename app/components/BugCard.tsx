@@ -138,7 +138,7 @@ export default function BugCard({ fields, createStatus, onUpdate, onCreate }: Pr
               ) : 'Create in Jira'}
             </button>
             {createStatus.type === 'error' && (
-              <p className="text-red-500 text-xs">{createStatus.message}</p>
+              <p className="text-red-500 text-xs">{createStatus.message.slice(0, 120)}</p>
             )}
           </>
         )}

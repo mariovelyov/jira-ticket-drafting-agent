@@ -39,7 +39,7 @@ export default function ToolCard({ part, draft, createStatus, onUpdate, onCreate
   if (part.state === 'output-error') {
     return (
       <div className="text-red-600 text-sm">
-        Error drafting ticket: {part.errorText}
+        Error drafting ticket. Please try again.
       </div>
     );
   }

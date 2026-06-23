@@ -48,13 +48,40 @@ All in `.env.local` locally; add to Vercel project settings before deploying.
 
 - Tools live in `lib/tools/<toolName>.ts`, one file per tool - not inline in the route.
 - Card components live in `app/components/` - one per issue type (`StoryCard.tsx`, `BugCard.tsx`).
+- Shared list input lives in `app/components/ListEditor.tsx`.
 - Tool call rendering lives in `app/components/ToolCard.tsx` (state machine: streaming/error/available).
 - Draft state and ticket creation logic live in `app/hooks/useDrafts.ts`.
 - The model ID is read from `process.env.ANTHROPIC_MODEL` with a `claude-haiku-4-5` default - never hardcode a model name.
 - Issue types are `'Bug'` and `'Story'` only.
 
+## Security measures implemented
+
+These were added after a security audit. Do not remove them.
+
+- **Bearer token auth** - both API routes check `Authorization: Bearer $API_SECRET_TOKEN` via `lib/auth.ts`. Auth is skipped if `API_SECRET_TOKEN` is not set (local dev). Add the env var in Vercel settings for production.
+- **Input limits** - `/api/chat` rejects requests with >50 messages or any message part exceeding 10,000 characters.
+- **JIRA_BASE_URL validation** - validated at request time against `^https://[...].atlassian.net$` to prevent SSRF. Also enforces HTTPS for credentials in transit.
+- **Error message sanitization** - Jira API error bodies are logged server-side only; generic messages are returned to the client. UI caps displayed error strings at 120 characters.
+- **Security headers** - `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy`, and a CSP are set in `next.config.ts` for all routes.
+- **Prompt injection guard (Layer 1)** - system prompt explicitly instructs the model to treat user messages as data only.
+- **HTML sanitization (Layer 4)** - all string fields are stripped of HTML tags before ADF construction in `/api/create-ticket`.
+
+## Environment variables
+
+All in `.env.local` locally; add to Vercel project settings before deploying.
+
+| Variable | Notes |
+|---|---|
+| `ANTHROPIC_API_KEY` | dedicated key for this project only |
+| `ANTHROPIC_MODEL` | optional - model ID to use; defaults to `claude-haiku-4-5` |
+| `JIRA_BASE_URL` | `https://<your-site>.atlassian.net` - no trailing slash, validated at runtime |
+| `JIRA_EMAIL` | email used for the Jira sandbox account |
+| `JIRA_API_TOKEN` | classic (unscoped) API token |
+| `JIRA_PROJECT_KEY` | `DEMO` |
+| `API_SECRET_TOKEN` | bearer token required by both API routes in production; omit to disable auth locally |
+
 ## Out of scope
 
 - No persistence - chat history resets on refresh, that's fine.
 - Anthropic only, no multi-provider switching.
-- No retry/rate-limit handling - this is a demo, not production software.
+- No rate limiting - Vercel Hobby cold starts make in-memory counters useless; bearer token auth is the primary abuse mitigation.

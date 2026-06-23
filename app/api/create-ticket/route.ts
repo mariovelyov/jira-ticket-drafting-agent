@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { requireAuth } from '@/lib/auth';
 
 type AdfNode = Record<string, unknown>;
 
@@ -34,6 +35,14 @@ const bodySchema = z.discriminatedUnion('issueType', [
     qa: z.string().optional(),
   }),
 ]);
+
+function validateJiraBaseUrl(url: string | undefined): string {
+  if (!url) throw new Error('JIRA_BASE_URL is not set');
+  if (!/^https:\/\/[a-zA-Z0-9-]+\.atlassian\.net$/.test(url)) {
+    throw new Error('JIRA_BASE_URL must be https://<site>.atlassian.net with no trailing slash');
+  }
+  return url;
+}
 
 function heading(text: string): AdfNode {
   return { type: 'heading', attrs: { level: 3 }, content: [{ type: 'text', text }] };
@@ -100,15 +109,24 @@ function buildBugADF(b: z.infer<typeof bodySchema> & { issueType: 'Bug' }): AdfN
 }
 
 export async function POST(req: Request) {
+  const authError = requireAuth(req);
+  if (authError) return authError;
+
   const parsed = bodySchema.safeParse(await req.json());
   if (!parsed.success) {
     return Response.json({ error: parsed.error.flatten() }, { status: 400 });
   }
 
+  let base: string;
+  try {
+    base = validateJiraBaseUrl(process.env.JIRA_BASE_URL);
+  } catch (err) {
+    console.error('Jira config error:', err);
+    return Response.json({ error: 'Server configuration error' }, { status: 500 });
+  }
+
   const body = parsed.data;
   const summary = sanitize(body.summary);
-  // Strip trailing slash so JIRA_BASE_URL works with or without one
-  const base = process.env.JIRA_BASE_URL?.replace(/\/$/, '');
 
   try {
     const auth = Buffer.from(
@@ -135,7 +153,8 @@ export async function POST(req: Request) {
 
     const data = await res.json();
     if (!res.ok) {
-      return Response.json({ error: JSON.stringify(data) }, { status: res.status });
+      console.error('Jira API error:', JSON.stringify(data));
+      return Response.json({ error: 'Jira API error - check server logs' }, { status: res.status });
     }
 
     return Response.json({
@@ -143,8 +162,9 @@ export async function POST(req: Request) {
       url: `${base}/browse/${data.key}`,
     });
   } catch (err) {
+    console.error('create-ticket unexpected error:', err);
     return Response.json(
-      { error: err instanceof Error ? err.message : 'Server error' },
+      { error: 'Unexpected server error' },
       { status: 500 }
     );
   }
