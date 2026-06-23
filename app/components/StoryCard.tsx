@@ -81,7 +81,7 @@ export default function StoryCard({ fields, createStatus, onUpdate, onCreate }: 
   const [optionalOpen, setOptionalOpen] = useState(false);
 
   return (
-    <div className="border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden">
+    <div className="border border-gray-200 rounded-xl bg-white shadow-sm overflow-hidden animate-[fadeInUp_0.25s_ease]">
       {/* Card header */}
       <div className="flex items-center gap-2.5 px-4 py-3 border-b border-gray-100">
         <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full uppercase tracking-wide shrink-0">
@@ -199,9 +199,14 @@ export default function StoryCard({ fields, createStatus, onUpdate, onCreate }: 
               type="button"
               onClick={onCreate}
               disabled={createStatus.type === 'loading'}
-              className="bg-blue-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors"
+              className="bg-blue-600 text-white rounded-lg px-4 py-2 text-sm font-medium hover:bg-blue-700 disabled:opacity-50 transition-colors flex items-center gap-2"
             >
-              {createStatus.type === 'loading' ? 'Creating...' : 'Create in Jira'}
+              {createStatus.type === 'loading' ? (
+                <>
+                  <span className="w-3 h-3 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                  Creating...
+                </>
+              ) : 'Create in Jira'}
             </button>
             {createStatus.type === 'error' && (
               <p className="text-red-500 text-xs">{createStatus.message}</p>
