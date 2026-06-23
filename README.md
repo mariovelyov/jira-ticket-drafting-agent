@@ -84,6 +84,9 @@ app/
   components/
     StoryCard.tsx          # editable card for story tickets
     BugCard.tsx            # editable card for bug tickets
+    ToolCard.tsx           # renders a tool call part (streaming / error / available states)
+  hooks/
+    useDrafts.ts           # draft state and ticket creation logic
   page.tsx                 # chat UI
 lib/
   tools/

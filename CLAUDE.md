@@ -48,6 +48,8 @@ All in `.env.local` locally; add to Vercel project settings before deploying.
 
 - Tools live in `lib/tools/<toolName>.ts`, one file per tool - not inline in the route.
 - Card components live in `app/components/` - one per issue type (`StoryCard.tsx`, `BugCard.tsx`).
+- Tool call rendering lives in `app/components/ToolCard.tsx` (state machine: streaming/error/available).
+- Draft state and ticket creation logic live in `app/hooks/useDrafts.ts`.
 - The model ID is read from `process.env.ANTHROPIC_MODEL` with a `claude-haiku-4-5` default - never hardcode a model name.
 - Issue types are `'Bug'` and `'Story'` only.
 
