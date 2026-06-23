@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import ListEditor from './ListEditor';
 import type { CreateStatus } from './StoryCard';
 
 export type BugFields = {
@@ -13,58 +14,12 @@ export type BugFields = {
   qa: string;
 };
 
-export type { CreateStatus };
-
 type Props = {
   fields: BugFields;
   createStatus: CreateStatus;
   onUpdate: (patch: Partial<BugFields>) => void;
   onCreate: () => void;
 };
-
-function ListEditor({
-  items,
-  onChange,
-  placeholder,
-}: {
-  items: string[];
-  onChange: (items: string[]) => void;
-  placeholder?: string;
-}) {
-  return (
-    <div className="space-y-2">
-      {items.map((item, i) => (
-        <div key={i} className="flex gap-2">
-          <input
-            className={inputCls}
-            value={item}
-            placeholder={placeholder}
-            onChange={(e) => {
-              const updated = [...items];
-              updated[i] = e.target.value;
-              onChange(updated);
-            }}
-          />
-          <button
-            type="button"
-            onClick={() => onChange(items.filter((_, j) => j !== i))}
-            className="text-gray-300 hover:text-red-400 text-sm px-2 transition-colors"
-            aria-label="Remove"
-          >
-            ✕
-          </button>
-        </div>
-      ))}
-      <button
-        type="button"
-        onClick={() => onChange([...items, ''])}
-        className="text-blue-400 hover:text-blue-600 text-xs font-medium transition-colors"
-      >
-        + Add
-      </button>
-    </div>
-  );
-}
 
 const inputCls = 'w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors';
 const textareaCls = `${inputCls} resize-none`;

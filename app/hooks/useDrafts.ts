@@ -12,6 +12,11 @@ export function useDrafts() {
   const [createStatuses, setCreateStatuses] = useState<Record<string, CreateStatus>>({});
   const initializedRef = useRef<Set<string>>(new Set());
 
+  // Called during render of page.tsx (the component that owns setDrafts).
+  // React permits render-time state updates on the owning component - it discards
+  // the in-progress render and immediately re-renders with the new state, avoiding
+  // the empty-card flash that a useEffect approach would cause.
+  // The ref guard makes it idempotent so only the first call per toolCallId fires.
   function initDraft(toolCallId: string, kind: 'story' | 'bug', output: Record<string, unknown>) {
     if (initializedRef.current.has(toolCallId)) return;
     initializedRef.current.add(toolCallId);
@@ -34,6 +39,8 @@ export function useDrafts() {
             analytics: '',
             releaseNotes: '',
             qa: '',
+            // Extra keys from the model are ignored by TypeScript but land in the object;
+            // acceptable for a demo - all fields are sanitized before the Jira POST
             ...output,
           } as StoryFields,
         },
