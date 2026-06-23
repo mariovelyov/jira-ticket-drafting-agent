@@ -8,7 +8,7 @@ const securityHeaders = [
     key: 'Content-Security-Policy',
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // unsafe-* required by Next.js dev runtime
+      "script-src 'self' 'unsafe-inline' 'unsafe-eval'", // unsafe-eval required by Next.js in both dev and production (hydration); limits XSS protection
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' data:",
       "font-src 'self' https://fonts.gstatic.com",
