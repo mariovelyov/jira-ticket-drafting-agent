@@ -17,7 +17,22 @@ type Props = {
 export default function ToolCard({ part, draft, createStatus, onUpdate, onCreate }: Props) {
   if (part.state === 'input-streaming' || part.state === 'input-available') {
     return (
-      <div className="text-gray-400 text-sm italic">Drafting ticket...</div>
+      <div className="border border-gray-200 rounded-xl bg-white shadow-sm p-4 space-y-3 animate-pulse">
+        <div className="h-2.5 w-14 bg-gray-200 rounded-full" />
+        <div className="space-y-2">
+          <div className="h-2.5 bg-gray-200 rounded-full w-full" />
+          <div className="h-2.5 bg-gray-200 rounded-full w-3/4" />
+        </div>
+        <div className="space-y-2">
+          <div className="h-2.5 bg-gray-200 rounded-full w-1/2" />
+          <div className="h-2.5 bg-gray-200 rounded-full w-full" />
+          <div className="h-2.5 bg-gray-200 rounded-full w-3/4" />
+        </div>
+        <div className="space-y-2">
+          <div className="h-2.5 bg-gray-200 rounded-full w-full" />
+          <div className="h-2.5 bg-gray-200 rounded-full w-1/2" />
+        </div>
+      </div>
     );
   }
 
