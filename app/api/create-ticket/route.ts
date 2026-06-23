@@ -38,10 +38,11 @@ const bodySchema = z.discriminatedUnion('issueType', [
 
 function validateJiraBaseUrl(url: string | undefined): string {
   if (!url) throw new Error('JIRA_BASE_URL is not set');
-  if (!/^https:\/\/[a-zA-Z0-9-]+\.atlassian\.net$/.test(url)) {
-    throw new Error('JIRA_BASE_URL must be https://<site>.atlassian.net with no trailing slash');
+  const stripped = url.replace(/\/$/, '');
+  if (!/^https:\/\/[a-zA-Z0-9-]+\.atlassian\.net$/.test(stripped)) {
+    throw new Error('JIRA_BASE_URL must be https://<site>.atlassian.net');
   }
-  return url;
+  return stripped;
 }
 
 function heading(text: string): AdfNode {
