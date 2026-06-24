@@ -38,7 +38,7 @@ const bodySchema = z.discriminatedUnion('issueType', [
 
 function validateJiraBaseUrl(url: string | undefined): string {
   if (!url) throw new Error('JIRA_BASE_URL is not set');
-  const stripped = url.replace(/\/$/, '');
+  const stripped = url.trim().replace(/\/$/, '');
   if (!/^https:\/\/[a-zA-Z0-9-]+\.atlassian\.net$/.test(stripped)) {
     throw new Error('JIRA_BASE_URL must be https://<site>.atlassian.net');
   }
