@@ -73,16 +73,18 @@ All in `.env.local` locally; add to Vercel project settings before deploying.
 - Hosted on Vercel Hobby tier - every push to `main` triggers an automatic redeploy.
 - Vercel project: `jira-ticket-drafting-agent` under mario-velyov-s-projects.
 
-### ANTHROPIC_API_KEY - disabled by default
+### ANTHROPIC_API_KEY - disabled when not in use
 
-The Anthropic API key in Vercel is **disabled when not in active use** to prevent quota drain. Before testing or doing a demo, re-enable it:
+The Anthropic API key is disabled at the source (Anthropic console) when not in active use to prevent quota drain. No Vercel redeploy is needed - the key is validated at request time.
 
-1. Go to Vercel → project → Settings → Environment Variables
-2. Find `ANTHROPIC_API_KEY` and enable it (or add the value if removed)
-3. Trigger a redeploy: push a trivial commit or redeploy manually from the Deployments tab
-4. After the session, disable it again
+To enable for testing/demo:
+1. Go to [console.anthropic.com](https://console.anthropic.com) → API keys → enable the key for this project
+2. Test immediately - no redeploy needed
 
-The app will return an error from `/api/chat` if the key is missing - this is expected when disabled.
+To disable after the session:
+1. Go to console.anthropic.com → API keys → disable the key
+
+The app returns an error from `/api/chat` when the key is inactive - this is expected, not a bug.
 
 ## Out of scope
 

@@ -6,7 +6,7 @@ import ToolCard from './components/ToolCard';
 import { useDrafts } from './hooks/useDrafts';
 
 export default function Home() {
-  const { messages, sendMessage, status } = useChat();
+  const { messages, sendMessage, status, error } = useChat();
   const [input, setInput] = useState('');
   const { drafts, createStatuses, initDraft, updateDraft, handleCreate } = useDrafts();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -61,6 +61,17 @@ export default function Home() {
             <p className="text-sm text-gray-500 max-w-xs leading-relaxed">
               Describe a bug or feature in plain language - AI classifies it and fills in the ticket structure for you.
             </p>
+          </div>
+        )}
+
+        {error && (
+          <div className="flex items-start gap-3 bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-sm text-red-700">
+            <svg className="w-4 h-4 shrink-0 mt-0.5" viewBox="0 0 16 16" fill="none">
+              <path d="M8 5v4M8 11h.01M14 8A6 6 0 1 1 2 8a6 6 0 0 1 12 0Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
+            </svg>
+            <span>
+              The AI service is currently unavailable. Contact the administrator to enable it for testing or demo.
+            </span>
           </div>
         )}
 
