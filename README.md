@@ -4,6 +4,10 @@ A streaming chat app that turns plain-English bug/feature descriptions into stru
 
 Built with Next.js 16, AI SDK v6, and the Jira Cloud REST API. Portfolio project demonstrating a human-in-the-loop AI architecture.
 
+**Live demo:** https://jira-ticket-drafting-agent.vercel.app
+
+> The demo requires the Anthropic API key to be active in Vercel. If the app returns an error on first message, contact the administrator to enable it.
+
 ## How it works
 
 1. Type a bug or feature description in the chat
@@ -84,6 +88,7 @@ app/
   components/
     StoryCard.tsx          # editable card for story tickets
     BugCard.tsx            # editable card for bug tickets
+    ListEditor.tsx         # shared list input with stable keys
     ToolCard.tsx           # renders a tool call part (streaming / error / available states)
   hooks/
     useDrafts.ts           # draft state and ticket creation logic
