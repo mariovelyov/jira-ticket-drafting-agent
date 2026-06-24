@@ -21,7 +21,7 @@ type Props = {
   onCreate: () => void;
 };
 
-const inputCls = 'w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors';
+const inputCls = 'w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-gray-900 bg-gray-50 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white transition-colors';
 const textareaCls = `${inputCls} resize-none`;
 const labelCls = 'text-xs font-semibold text-gray-400 uppercase tracking-wide';
 const sectionCls = 'space-y-1.5';
