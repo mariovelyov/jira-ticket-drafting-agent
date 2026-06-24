@@ -31,19 +31,6 @@ TypeScript won't auto-narrow a tool part after checking `part.type` - cast expli
 
 ADF is built server-side in `/api/create-ticket` from structured fields - the LLM never produces markup.
 
-## Environment variables
-
-All in `.env.local` locally; add to Vercel project settings before deploying.
-
-| Variable | Notes |
-|---|---|
-| `ANTHROPIC_API_KEY` | dedicated key for this project only |
-| `ANTHROPIC_MODEL` | optional - model ID to use; defaults to `claude-haiku-4-5` |
-| `JIRA_BASE_URL` | `https://<your-site>.atlassian.net` - no trailing slash |
-| `JIRA_EMAIL` | email used for the Jira sandbox account |
-| `JIRA_API_TOKEN` | classic (unscoped) API token |
-| `JIRA_PROJECT_KEY` | `DEMO` |
-
 ## Project structure conventions
 
 - Tools live in `lib/tools/<toolName>.ts`, one file per tool - not inline in the route.
@@ -79,6 +66,23 @@ All in `.env.local` locally; add to Vercel project settings before deploying.
 | `JIRA_API_TOKEN` | classic (unscoped) API token |
 | `JIRA_PROJECT_KEY` | `DEMO` |
 | `API_SECRET_TOKEN` | bearer token required by both API routes in production; omit to disable auth locally |
+
+## Deployment
+
+- **Live URL:** https://jira-ticket-drafting-agent.vercel.app
+- Hosted on Vercel Hobby tier - every push to `main` triggers an automatic redeploy.
+- Vercel project: `jira-ticket-drafting-agent` under mario-velyov-s-projects.
+
+### ANTHROPIC_API_KEY - disabled by default
+
+The Anthropic API key in Vercel is **disabled when not in active use** to prevent quota drain. Before testing or doing a demo, re-enable it:
+
+1. Go to Vercel → project → Settings → Environment Variables
+2. Find `ANTHROPIC_API_KEY` and enable it (or add the value if removed)
+3. Trigger a redeploy: push a trivial commit or redeploy manually from the Deployments tab
+4. After the session, disable it again
+
+The app will return an error from `/api/chat` if the key is missing - this is expected when disabled.
 
 ## Out of scope
 
